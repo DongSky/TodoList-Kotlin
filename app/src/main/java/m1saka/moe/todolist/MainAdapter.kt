@@ -13,6 +13,7 @@ class MainAdapter(val items : List<String>) : RecyclerView.Adapter<MainAdapter.V
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.textView.text = items[position]
+        holder.textView.textSize = 15F
     }
 
     class ViewHolder(val textView: TextView) : RecyclerView.ViewHolder(textView)
