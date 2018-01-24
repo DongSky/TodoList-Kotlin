@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="50dp">
 
 
     <TextView
@@ -15,8 +15,8 @@
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
         android:paddingTop="10dp"
-        android:textColor="#222222"
-        android:textSize="16sp" />
+        android:paddingBottom="10dp"
+        android:textSize="24sp" />
 
         <CheckBox
             android:id="@+id/check"

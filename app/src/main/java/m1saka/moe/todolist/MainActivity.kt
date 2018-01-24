@@ -1,83 +1,83 @@
 package m1saka.moe.todolist
 
-import android.content.DialogInterface
+import android.app.Activity
+import android.content.ContentValues
 import android.os.Bundle
+import android.support.design.widget.FloatingActionButton
 import android.support.v7.app.AlertDialog
-import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-
+import kotlinx.android.synthetic.main.todoitem_layout.view.*
 import java.util.*
+import org.jetbrains.anko.db.*
+import org.jetbrains.anko.view
 
-//import moe.m1saka.todolist.MainAdapter
-import moe.m1saka.todolist.*
+class MainActivity : Activity() {
 
-class MainActivity : AppCompatActivity() {
-
-    /*
-    val items = listOf(
-            "Beauty of Programming",
-            "ACM ICPC/CCPC",
-            "Super Resolution",
-            "Generative Adversavial Network",
-            "Android",
-            "6","7","8","9","10","11","12","13","14","15"
-    )
-    */
     var items = ArrayList<TodoItem>()
+    val database: DatabaseManage
+        get() = DatabaseManage.getInstance(getApplicationContext())
+    var nums = 0
 
     private fun init(){
-        items.add(TodoItem("Beauty of Programming", false))
-        items.add(TodoItem("ACM ICPC/CCPC", true))
-        items.add(TodoItem("Super Resolution", false))
-        items.add(TodoItem("Generative Adversarial Network", true))
-        items.add(TodoItem("Android", true))
-        items.add(TodoItem("Left FFF", false))
+        var list = database.use {
+            select("TodoList").parseList(classParser<TodoItem>())
+        }
+        items.clear()
+        for (item in list) { items.add(item) }
+        nums = items.size
     }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         init()
         val listview = findViewById(R.id.listview) as RecyclerView
         listview.layoutManager = LinearLayoutManager(this)
-        listview.adapter = TodoListAdapter(items){
-            var dialog = AlertDialog.Builder(this@MainActivity)
-            dialog.setTitle("Delete this Todo item? ")
+        listview.adapter = TodoListAdapter(items, this@MainActivity, database)
+        val addButton = findViewById(R.id.fab) as FloatingActionButton
+        addButton.setOnClickListener{
+            val et = EditText(this)
+            val dialog = AlertDialog.Builder(this@MainActivity)
+            dialog.setTitle("Add")
+            dialog.setView(et)
             dialog.setCancelable(true)
             dialog.setPositiveButton("Yes", {
                 dialogInterface, i ->
-                Toast.makeText(applicationContext, "You choose Yes.", Toast.LENGTH_SHORT).show()
+                var msg = et.text.toString()
+                var check = false
+                add(msg, check)
+                // Toast.makeText(applicationContext, "You choose Yes.", Toast.LENGTH_SHORT).show()
             })
-            dialog.setNegativeButton("No", {
-                dialogInterface, i ->
-                Toast.makeText(applicationContext, "You choose No.", Toast.LENGTH_SHORT).show()
-            })
+            dialog.setNegativeButton("Cancel", null)
             dialog.show()
         }
-
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //menuInflater.inflate(R.menu.menu_main, menu)
-        return true
+    fun add(item: String, isdone: Boolean) {
+        var query = database.use {
+            select("TodoList").whereArgs("todoitem = {item}", "item" to item).parseList(classParser<TodoItem>())
+        }
+        if (query.size > 0) {
+            Toast.makeText(applicationContext, "Fail, item exists.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        var check: Int
+        var values = ContentValues()
+        if (isdone == true) check = 1 else check = 0
+        values.put("todoitem", item)
+        values.put("isdone", check)
+        database.use {
+            insert("TodoList",null, values)
+        }
+        onCreate(null)
     }
-
-//    override fun onOptionsItemSelected(item: MenuItem) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-////        return when (item.itemId) {
-////            //R.id.action_settings -> true
-////            //else -> super.onOptionsItemSelected(item)
-////        }
-//    }
+    fun delete(item: String) {
+        database.use {
+            delete("TodoList", item)
+        }
+    }
 }
-
