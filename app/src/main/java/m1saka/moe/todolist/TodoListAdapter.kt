@@ -35,9 +35,13 @@ class TodoListAdapter(var _items: ArrayList<TodoItem>, var _context: Context, da
         var cnt = items.size
         items.removeAt(pos)
         notifyItemRemoved(pos)
-        notifyItemRangeChanged(0, cnt - 1)
+//        notifyItemRangeChanged(0, cnt - 1)
     }
-
+    fun refreshAdd(item: TodoItem) {
+        var cnt = items.size
+        items.add(item)
+        notifyItemInserted(items.size - 1)
+    }
     inner class ViewHolder(val view: View, context: Context, val database: DatabaseManage) : RecyclerView.ViewHolder(view){
         fun bind(item: TodoItem){
             view.title.text = item.todoitemTitle

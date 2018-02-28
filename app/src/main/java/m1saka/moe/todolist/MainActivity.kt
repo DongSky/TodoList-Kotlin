@@ -5,39 +5,45 @@ import android.content.ContentValues
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v7.app.AlertDialog
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.Menu
+import android.view.MenuItem
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.todoitem_layout.view.*
 import java.util.*
 import org.jetbrains.anko.db.*
+import org.jetbrains.anko.toast
 import org.jetbrains.anko.view
+import kotlin.collections.ArrayList
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
 
     var items = ArrayList<TodoItem>()
     val database: DatabaseManage
         get() = DatabaseManage.getInstance(getApplicationContext())
-    var nums = 0
-
+    private var mRecyclerViewAdapter: TodoListAdapter? = null
+    private var IO : TodoListIO? = null
     private fun init(){
         var list = database.use {
             select("TodoList").parseList(classParser<TodoItem>())
         }
         items.clear()
         for (item in list) { items.add(item) }
-        nums = items.size
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         init()
         val listview = findViewById(R.id.listview) as RecyclerView
+        mRecyclerViewAdapter = TodoListAdapter(items, this@MainActivity, database)
         listview.layoutManager = LinearLayoutManager(this)
-        listview.adapter = TodoListAdapter(items, this@MainActivity, database)
+        listview.adapter = mRecyclerViewAdapter
+        IO = TodoListIO(this@MainActivity, database)
         val addButton = findViewById(R.id.fab) as FloatingActionButton
         addButton.setOnClickListener{
             val et = EditText(this)
@@ -57,6 +63,27 @@ class MainActivity : Activity() {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.import_item) {
+            val importContents = IO?.importFromSDCard() as ArrayList<TodoItem>
+            for (i in importContents) {
+                add(i.todoitemTitle, i.isdone)
+            }
+        }
+        else if (item.itemId == R.id.export_item) {
+            IO?.writeToSDCard()
+        }
+        else if (item.itemId == R.id.exit_item) {
+            this@MainActivity.finish()
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     fun add(item: String, isdone: Boolean) {
         var query = database.use {
             select("TodoList").whereArgs("todoitem = {item}", "item" to item).parseList(classParser<TodoItem>())
@@ -73,11 +100,7 @@ class MainActivity : Activity() {
         database.use {
             insert("TodoList",null, values)
         }
-        onCreate(null)
-    }
-    fun delete(item: String) {
-        database.use {
-            delete("TodoList", item)
-        }
+        var newTodoItem = TodoItem(item, isdone)
+        mRecyclerViewAdapter?.refreshAdd(newTodoItem)
     }
 }
