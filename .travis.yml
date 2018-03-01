@@ -10,7 +10,7 @@ install:
   - echo yes | sdkmanager "platforms;android-27" &>/dev/null
 
 script:
-  - ./gradlew clean testDebug lintDebug coveralls -Dscan --stacktrace
+  - ./gradlew clean testDebug lintDebug -Dscan --stacktrace
 
 branches:
   except:
