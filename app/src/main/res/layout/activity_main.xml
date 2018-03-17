@@ -31,7 +31,7 @@
         <android.support.v7.widget.RecyclerView
             android:id="@+id/listview"
             android:layout_width="match_parent"
-            android:layout_height="520dp"
+            android:layout_height="match_parent"
             android:layout_gravity="bottom|end"
             app:layout_constraintEnd_toEndOf="parent" />
 
